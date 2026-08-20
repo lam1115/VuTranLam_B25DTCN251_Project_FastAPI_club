@@ -20,9 +20,8 @@ class Club_activitiesModel(Base):
     due_date = Column(DateTime)
     created_at = Column(DateTime, default=datetime.now(), nullable=False)
 
+    # Relationship
     club = relationship("ClubModel", back_populates="activities")
     assignee = relationship("UserModel", back_populates="assigned_activities")
-
-    # Nâng cao
     comments = relationship("CommentsModel", back_populates="activity")
     attachments = relationship("AttachmentsModel", back_populates="activity")

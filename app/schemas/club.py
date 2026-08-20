@@ -1,9 +1,19 @@
 from pydantic import BaseModel, ConfigDict
+from typing import List, Optional
+
+from app.schemas.member import ClubMemberResponse
 
 
 class ClubBase(BaseModel):
     name: str
-    description: str
+    description: Optional[str] = None
+
+
+class OwnerInfo(BaseModel):
+    id: int
+    full_name: str
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ClubCreate(ClubBase):
@@ -17,7 +27,16 @@ class ClubUpdate(BaseModel):
 
 class ClubResponse(ClubBase):
     id: int
-    owner_id: int
+    owner: OwnerInfo
     created_at: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ClubDetailResponse(ClubBase):
+    id: int
+    owner: OwnerInfo
+    created_at: str
+    members: List[ClubMemberResponse] | None = None
 
     model_config = ConfigDict(from_attributes=True)

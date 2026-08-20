@@ -18,6 +18,7 @@ class CommentsModel(Base):
     content = Column(Text, nullable=False)
     created_at = Column(DateTime, default=datetime.now(), nullable=False)
 
+    # Relationship
     activity = relationship("Club_activitiesModel", back_populates="comments")
     user = relationship("UserModel", back_populates="comments")
 
@@ -37,6 +38,7 @@ class AttachmentsModel(Base):
     mime_type = Column(String(100), nullable=False)
     created_at = Column(DateTime, default=datetime.now(), nullable=False)
 
+    # Relationship
     activity = relationship("Club_activitiesModel", back_populates="attachments")
     user = relationship("UserModel", back_populates="attachments")
 
@@ -53,6 +55,7 @@ class Activity_logsModel(Base):
     details = Column(Text, nullable=False)
     created_at = Column(DateTime, default=datetime.now(), nullable=False)
 
+    # Relationship
     user = relationship("UserModel", back_populates="activity_logs")
 
 
@@ -67,4 +70,5 @@ class Refresh_tokensModel(Base):
     expires_at = Column(DateTime, default=datetime.now(), nullable=False)
     created_at = Column(DateTime, default=datetime.now(), nullable=False)
 
+    # Relationship
     user = relationship("UserModel", back_populates="refresh_tokens")

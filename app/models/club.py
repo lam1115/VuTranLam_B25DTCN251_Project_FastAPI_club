@@ -30,5 +30,6 @@ class Club_membersModel(Base):
     role = Column(Enum("OWNER", "MEMBER"), nullable=False)
     joined_at = Column(DateTime, default=datetime.now(), nullable=False)
 
+    # Relationship
     club = relationship("ClubModel", back_populates="members")
     user = relationship("UserModel", back_populates="club_memberships")

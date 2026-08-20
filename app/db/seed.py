@@ -23,7 +23,7 @@ def seed_data():
         print("--- Khởi tạo dữ liệu mẫu theo yêu cầu mới ---")
 
         # -------------------------------------------------------------
-        # 1. BẢNG USERS: 1 Admin (Vũ Trần Lâm) + 10 Users thường
+        # 1. BẢNG USERS: 1 Admin + 10 Users thường
         # -------------------------------------------------------------
         admin_user = UserModel(
             email="vutranlam1115@gmail.com",

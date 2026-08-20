@@ -1,10 +1,11 @@
 from pydantic import BaseModel, EmailStr, ConfigDict
+from typing import Optional
 from enum import Enum
 
 
 class UserRole(str, Enum):
-    USER = "User"
-    ADMIN = "Admin"
+    USER = "USER"
+    ADMIN = "ADMIN"
 
 
 class UserBase(BaseModel):
@@ -17,8 +18,8 @@ class CreateUser(UserBase):
 
 
 class UpdateUser(BaseModel):
-    full_name: str
-    email: EmailStr
+    email: Optional[EmailStr] = None
+    full_name: Optional[str] = None
 
 
 class UserResponse(UserBase):
