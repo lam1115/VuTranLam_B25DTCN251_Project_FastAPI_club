@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 from datetime import datetime
 
@@ -11,8 +11,9 @@ from app.auth.login import login_user
 from app.core.exceptions import UnauthorizedException
 from app.core.security import hash_token, create_access_token
 from app.dependencies import verify_refresh_token
+from app.core.limiter import limit
 
-router = APIRouter(prefix="/api/studentclub/auth", tags=["Authentication User"])
+router = APIRouter(prefix="/studentclub/auth", tags=["Authentication User"])
 
 
 @router.post("/register")
@@ -27,7 +28,8 @@ def register(data: UserRegister, db: Session = Depends(get_db)) -> dict:
 
 
 @router.post("/login", response_model=TokenResponse)
-def login(data: UserLogin, db: Session = Depends(get_db)) -> dict:
+@limit.limit("5/minute")
+def login(request: Request, data: UserLogin, db: Session = Depends(get_db)) -> dict:
     access_token, raw_refresh_token = login_user(data, db)
 
     return {
