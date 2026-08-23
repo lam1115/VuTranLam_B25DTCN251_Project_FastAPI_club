@@ -7,9 +7,7 @@ from app.db.database import SessionLocal
 from app.models import UserModel
 from app.models import ClubModel, Club_membersModel
 from app.models import Club_activitiesModel
-
-# Chuỗi Bcrypt Hash chuẩn của mật khẩu "123456"
-DEFAULT_HASHED_PASSWORD = "$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeg6Lruj3vjPGga31lW"
+from app.core.security import hash_password
 
 
 def seed_data():
@@ -27,7 +25,7 @@ def seed_data():
         # -------------------------------------------------------------
         admin_user = UserModel(
             email="vutranlam1115@gmail.com",
-            password_hash=DEFAULT_HASHED_PASSWORD,
+            password_hash=hash_password("123456"),
             full_name="Vũ Trần Lâm",
             role="ADMIN",
             is_active=True,
@@ -36,71 +34,64 @@ def seed_data():
         normal_users = [
             UserModel(
                 email="nguyenvana@gmail.com",
-                password_hash=DEFAULT_HASHED_PASSWORD,
+                password_hash=hash_password("234567"),
                 full_name="Nguyễn Văn A",
                 role="USER",
                 is_active=True,
             ),
             UserModel(
                 email="tranthib@gmail.com",
-                password_hash=DEFAULT_HASHED_PASSWORD,
+                password_hash=hash_password("345678"),
                 full_name="Trần Thị B",
                 role="USER",
                 is_active=True,
             ),
             UserModel(
                 email="levanc@gmail.com",
-                password_hash=DEFAULT_HASHED_PASSWORD,
+                password_hash=hash_password("456789"),
                 full_name="Lê Văn C",
                 role="USER",
                 is_active=True,
             ),
             UserModel(
                 email="phamthid@gmail.com",
-                password_hash=DEFAULT_HASHED_PASSWORD,
+                password_hash=hash_password("567890"),
                 full_name="Phạm Thị D",
                 role="USER",
                 is_active=True,
             ),
             UserModel(
                 email="hoangvane@gmail.com",
-                password_hash=DEFAULT_HASHED_PASSWORD,
+                password_hash=hash_password("678901"),
                 full_name="Hoàng Văn E",
                 role="USER",
                 is_active=True,
             ),
             UserModel(
                 email="vothif@gmail.com",
-                password_hash=DEFAULT_HASHED_PASSWORD,
+                password_hash=hash_password("789012"),
                 full_name="Võ Thị F",
                 role="USER",
                 is_active=True,
             ),
             UserModel(
                 email="dangvang@gmail.com",
-                password_hash=DEFAULT_HASHED_PASSWORD,
+                password_hash=hash_password("890123"),
                 full_name="Đặng Văn G",
                 role="USER",
                 is_active=True,
             ),
             UserModel(
                 email="buitih@gmail.com",
-                password_hash=DEFAULT_HASHED_PASSWORD,
+                password_hash=hash_password("901234"),
                 full_name="Bùi Thị H",
                 role="USER",
                 is_active=True,
             ),
             UserModel(
                 email="donvani@gmail.com",
-                password_hash=DEFAULT_HASHED_PASSWORD,
+                password_hash=hash_password("012345"),
                 full_name="Đỗ Văn I",
-                role="USER",
-                is_active=True,
-            ),
-            UserModel(
-                email="ngokhanhk@gmail.com",
-                password_hash=DEFAULT_HASHED_PASSWORD,
-                full_name="Ngô Khánh K",
                 role="USER",
                 is_active=True,
             ),

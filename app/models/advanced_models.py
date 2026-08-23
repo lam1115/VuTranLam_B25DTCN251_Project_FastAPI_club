@@ -68,7 +68,8 @@ class Refresh_tokensModel(Base):
     user_id = Column(Integer, ForeignKey("Users.user_id"), nullable=False)
     is_revoked = Column(Boolean, default=False, nullable=False)
     expires_at = Column(DateTime, default=datetime.now(), nullable=False)
-    created_at = Column(DateTime, default=datetime.now(), nullable=False)
+    created_at = Column(DateTime)
+    user_agent = Column(String(255), nullable=True)
 
     # Relationship
     user = relationship("UserModel", back_populates="refresh_tokens")

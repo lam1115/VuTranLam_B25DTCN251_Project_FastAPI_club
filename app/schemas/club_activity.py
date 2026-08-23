@@ -1,5 +1,6 @@
 from pydantic import BaseModel, ConfigDict, Field
 from typing import Optional
+from datetime import datetime
 from enum import Enum
 
 
@@ -19,7 +20,7 @@ class ActivityBase(BaseModel):
     title: str
     description: Optional[str] = None
     priority: ActivityPriority = ActivityPriority.MEDIUM
-    due_date: Optional[str] = None
+    due_date: Optional[datetime] = None
 
 
 class ActivityCreate(ActivityBase):
@@ -34,16 +35,16 @@ class ActivityUpdate(BaseModel):
     )
     status: ActivityStatus
     priority: ActivityPriority
-    due_date: str
+    due_date: Optional[datetime] = None
 
 
 class ActivityResponse(ActivityBase):
-    id: int
+    activity_id: int
     club_name: str = Field(validation_alias="club.club_name")
     assignee_name: Optional[str] = Field(
         default=None, validation_alias="assignee.full_name"
     )
-    status: ActivityStatus
-    created_at: str
+    status: Optional[ActivityStatus] = None
+    created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)

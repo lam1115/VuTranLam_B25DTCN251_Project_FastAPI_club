@@ -15,7 +15,7 @@ class ClubMemberCreate(BaseModel):
 
 
 class MemberInfo(BaseModel):
-    id: int
+    user_id: int
     email: EmailStr
     full_name: str
 
@@ -26,6 +26,6 @@ class ClubMemberResponse(BaseModel):
     club_name: str = Field(validation_alias="club.club_name")
     user: MemberInfo
     role: MemberRole
-    joined_at: Optional[datetime]
+    joined_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
