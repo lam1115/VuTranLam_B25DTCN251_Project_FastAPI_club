@@ -1,11 +1,12 @@
 import os, jwt
 from dotenv import load_dotenv
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from app.db.database import SessionLocal
 from app.core.exceptions import ForbiddenException
 from app.schemas.user import RefreshTokenSchema
+from app.core.exceptions import UnauthorizedException
 
 security = HTTPBearer()
 load_dotenv()
@@ -27,13 +28,9 @@ def decode_token(token: str) -> dict:
     try:
         return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
     except jwt.ExpiredSignatureError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Token đã hết hạn"
-        )
+        raise UnauthorizedException("Token đã hết hạn")
     except jwt.InvalidTokenError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Token không hợp lệ"
-        )
+        raise UnauthorizedException("Token không hợp lệ")
 
 
 def get_current_user(
@@ -43,7 +40,7 @@ def get_current_user(
 
     # Kiểm tra đảm bảo đây là Access Token
     if payload.get("type") != "access":
-        raise HTTPException(status_code=401, detail="Vui lòng sử dụng Access Token")
+        raise UnauthorizedException("Vui lòng sử dụng Access Token")
 
     return payload
 
@@ -53,7 +50,7 @@ def verify_refresh_token(body: RefreshTokenSchema) -> dict:
 
     # Kiểm tra đảm bảo đây là Refresh Token
     if payload.get("type") != "refresh":
-        raise HTTPException(status_code=401, detail="Vui lòng sử dụng Refresh Token")
+        raise UnauthorizedException("Vui lòng sử dụng Refresh Token")
 
     return payload
 

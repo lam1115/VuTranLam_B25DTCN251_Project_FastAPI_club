@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+from typing import Optional
 from app.models.club import ClubModel, Club_membersModel
 from app.schemas.club import ClubCreate
 from app.core.exceptions import BadRequestException
@@ -25,3 +26,16 @@ def create_club_service(db: Session, data: ClubCreate, user_id: int) -> ClubMode
     db.refresh(new_club)
 
     return new_club
+
+
+def get_my_clubs_service(db: Session, user_id: int, search: str | None = None):
+    query = (
+        db.query(ClubModel)
+        .join(Club_membersModel, ClubModel.club_id == Club_membersModel.club_id)
+        .filter(Club_membersModel.user_id == user_id)
+    )
+
+    if search:
+        query = query.filter(ClubModel.club_name.ilike(f"%{search.strip()}%"))
+
+    return query.all()
