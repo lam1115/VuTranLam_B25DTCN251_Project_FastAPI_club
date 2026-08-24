@@ -10,6 +10,7 @@ from app.services.club import (
     update_club_put_service,
     update_club_patch_service,
     delete_club_service,
+    restore_club_service,
 )
 from app.dependencies import get_current_user
 
@@ -92,3 +93,13 @@ def delete_club(
 ):
     user_id = int(current_user["sub"])
     return delete_club_service(db=db, club_id=club_id, current_user_id=user_id)
+
+
+@router.post("/{club_id}/restore", status_code=status.HTTP_200_OK)
+def restore_club(
+    club_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    current_user_id = int(current_user["sub"])
+    return restore_club_service(db=db, club_id=club_id, current_user_id=current_user_id)

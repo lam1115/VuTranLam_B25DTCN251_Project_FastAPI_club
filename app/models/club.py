@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Enum
+from sqlalchemy import Column, Integer, String, Enum, Boolean
 from sqlalchemy import ForeignKey, DateTime, Text
 from sqlalchemy.orm import relationship
 from datetime import datetime
@@ -15,6 +15,8 @@ class ClubModel(Base):
     description = Column(Text)
     owner_id = Column(Integer, ForeignKey("Users.user_id"), nullable=False)
     created_at = Column(DateTime, default=datetime.now(), nullable=False)
+    is_deleted = Column(Boolean, default=False, nullable=False)
+    deleted_at = Column(DateTime, nullable=True)
 
     owner = relationship("UserModel", back_populates="owned_clubs")
     members = relationship("Club_membersModel", back_populates="club")

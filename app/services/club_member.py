@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session, joinedload
 from app.models.club import ClubModel, Club_membersModel
 from app.models.user import UserModel
 from app.schemas.member import ClubMemberCreate
+from app.services.activity_log import create_activity_log
 from app.core.exceptions import (
     ForbiddenException,
     NotFoundException,
@@ -16,9 +17,14 @@ def add_club_member_service(
     db: Session, club_id: int, member_in: ClubMemberCreate, current_user_id: int
 ) -> Club_membersModel:
     # 1. Kiểm tra câu lạc bộ có tồn tại không
-    club = db.query(ClubModel).filter(ClubModel.club_id == club_id).first()
+    club = (
+        db.query(ClubModel)
+        .filter(ClubModel.club_id == club_id, ClubModel.is_deleted == False)
+        .first()
+    )
+
     if not club:
-        raise NotFoundException("Câu lạc bộ không tồn tại!")
+        raise NotFoundException("Câu lạc bộ không tồn tại hoặc đã bị xóa!")
 
     # 2. Kiểm tra người thực hiện có phải là OWNER không
     if club.owner_id != current_user_id:
@@ -55,6 +61,16 @@ def add_club_member_service(
         club_id=club_id, user_id=member_in.user_id, role="MEMBER"
     )
     db.add(new_member)
+
+    create_activity_log(
+        db=db,
+        user_id=current_user_id,
+        action="ADD_MEMBER",
+        entity_type="MEMBER",
+        entity_id=member_in.user_id,
+        details=f"Đã thêm user_id {member_in.user_id} vào câu lạc bộ id {club_id}",
+    )
+
     db.commit()
 
     # 6. Truy vấn lại bản ghi kèm theo relationship 'club' (và 'user' nếu schema yêu cầu)
@@ -80,9 +96,14 @@ def remove_club_member_service(
     new_owner_id: int | None = None,
 ) -> dict:
     # 1. Kiểm tra câu lạc bộ có tồn tại không
-    club = db.query(ClubModel).filter(ClubModel.club_id == club_id).first()
+    club = (
+        db.query(ClubModel)
+        .filter(ClubModel.club_id == club_id, ClubModel.is_deleted == False)
+        .first()
+    )
+
     if not club:
-        raise NotFoundException("Câu lạc bộ không tồn tại!")
+        raise NotFoundException("Câu lạc bộ không tồn tại hoặc đã bị xóa!")
 
     # 2. Phân quyền: Ai được phép xóa?
     # - Owner có quyền xóa bất kỳ thành viên nào (trừ chính mình nếu chưa chuyển quyền).
@@ -156,6 +177,16 @@ def remove_club_member_service(
 
     # 5. Tiến hành xóa thành viên khỏi bảng Club_members
     db.delete(target_member)
+
+    create_activity_log(
+        db=db,
+        user_id=current_user_id,
+        action="REMOVE_MEMBER",
+        entity_type="MEMBER",
+        entity_id=target_user_id,
+        details=f"Đã xóa user_id {target_user_id} khỏi câu lạc bộ id {club_id}",
+    )
+
     db.commit()
 
     return {"message": "Đã xóa thành viên khỏi câu lạc bộ thành công!"}
@@ -166,9 +197,14 @@ def get_club_members_service(
     db: Session, club_id: int, current_user_id: int
 ) -> List[Club_membersModel]:
     # 1. Kiểm tra câu lạc bộ có tồn tại không
-    club = db.query(ClubModel).filter(ClubModel.club_id == club_id).first()
+    club = (
+        db.query(ClubModel)
+        .filter(ClubModel.club_id == club_id, ClubModel.is_deleted == False)
+        .first()
+    )
+
     if not club:
-        raise NotFoundException("Câu lạc bộ không tồn tại!")
+        raise NotFoundException("Câu lạc bộ không tồn tại hoặc đã bị xóa!")
 
     # 2. Kiểm tra xem người yêu cầu có phải thành viên của CLB không
     is_member = (
