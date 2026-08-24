@@ -16,6 +16,7 @@ from app.core.limiter import limit
 router = APIRouter(prefix="/studentclub/auth", tags=["Authentication User"])
 
 
+# Đăng ký
 @router.post("/register")
 def register(data: UserRegister, db: Session = Depends(get_db)) -> dict:
     user = register_user(data, db)
@@ -27,6 +28,7 @@ def register(data: UserRegister, db: Session = Depends(get_db)) -> dict:
     }
 
 
+# Đăng nhập
 @router.post("/login", response_model=TokenResponse)
 @limit.limit("5/minute")
 def login(request: Request, data: UserLogin, db: Session = Depends(get_db)) -> dict:
@@ -39,6 +41,7 @@ def login(request: Request, data: UserLogin, db: Session = Depends(get_db)) -> d
     }
 
 
+# Refesh token
 @router.post("/refresh")
 def refresh_token(
     body: RefreshTokenSchema,
@@ -69,11 +72,14 @@ def refresh_token(
 
     # 4. Lấy thông tin user và cấp Access Token MỚI
     user = db.query(UserModel).filter(UserModel.user_id == db_token.user_id).first()
-    new_access_token = create_access_token(user_id=user.user_id, role=user.role)
+    new_access_token = create_access_token(
+        user_id=user.user_id, full_name=user.full_name, email=user.email, role=user.role
+    )
 
     return {"access_token": new_access_token, "token_type": "bearer"}
 
 
+# Đăng xuất để kiểm tra refesh
 @router.post("/logout")
 def logout(body: RefreshTokenSchema, db: Session = Depends(get_db)):
     # Băm token gửi lên từ Body

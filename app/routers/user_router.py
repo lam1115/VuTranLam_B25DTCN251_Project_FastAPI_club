@@ -10,11 +10,13 @@ from app.dependencies import get_db
 router = APIRouter(prefix="/api/studentclub/users", tags=["Get User"])
 
 
+# Lấy thông tin tài khoản bản thân
 @router.get("/me")
 def get_me(current_user: dict = Depends(get_current_user)):
     return current_user
 
 
+# Lây thông tin tất cả User, có thêm chức năng search (chỉ hữu hiệu với ADMIN)
 @router.get("", response_model=list[UserResponse])
 def get_all_users(
     search: Optional[str] = None,

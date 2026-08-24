@@ -6,6 +6,7 @@ from app.core.security import hash_password
 from app.core.exceptions import BadRequestException
 
 
+# Đăng ký
 def register_user(data: UserRegister, db: Session) -> UserModel:
     user = db.query(UserModel).filter(UserModel.email == data.email).first()
 

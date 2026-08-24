@@ -11,7 +11,6 @@ class MemberRole(str, Enum):
 
 class ClubMemberCreate(BaseModel):
     user_id: int
-    role: str
 
 
 class MemberInfo(BaseModel):
@@ -22,8 +21,11 @@ class MemberInfo(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class ClubMemberRemoveRequest(BaseModel):
+    new_owner_id: Optional[int] = None
+
+
 class ClubMemberResponse(BaseModel):
-    club_name: str = Field(validation_alias="club.club_name")
     user: MemberInfo
     role: MemberRole
     joined_at: datetime

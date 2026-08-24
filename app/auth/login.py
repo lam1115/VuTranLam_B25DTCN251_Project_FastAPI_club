@@ -12,6 +12,7 @@ from app.core.security import (
 from app.core.exceptions import UnauthorizedException
 
 
+# Đăng nhập
 def login_user(data: UserLogin, db: Session) -> str:
     user = db.query(UserModel).filter(UserModel.email == data.email).first()
 
@@ -23,7 +24,9 @@ def login_user(data: UserLogin, db: Session) -> str:
     if check_pass is False:
         raise UnauthorizedException("Tài khoản hoặc mật khẩu không chính xác")
 
-    access_token = create_access_token(user.user_id, user.role)
+    access_token = create_access_token(
+        user.user_id, user.full_name, user.email, user.role
+    )
     raw_refresh_token, expires_at = create_refresh_token(user_id=user.user_id)
 
     hashed_refresh_token = hash_token(raw_refresh_token)

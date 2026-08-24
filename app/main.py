@@ -6,6 +6,7 @@ from app.db.database import Base, engine
 from app.routers.authentication_router import router as authentication
 from app.routers.user_router import router as user
 from app.routers.club_router import router as club
+from app.routers.ClubMember_router import router as member
 from app.core.limiter import limit
 
 
@@ -24,6 +25,7 @@ app.add_exception_handler(AppException, app_exception_handler)
 app.include_router(authentication)
 app.include_router(user)
 app.include_router(club)
+app.include_router(member)
 
 
 # Health check endpoint
