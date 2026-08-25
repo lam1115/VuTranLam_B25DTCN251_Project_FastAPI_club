@@ -16,26 +16,25 @@ from app.core.exceptions import (
 )
 
 
-def validate_club_member(db: Session, club_id: int, user_id: int) -> bool:
-    """
-    Kiểm tra User có quyền thành viên trong CLB không.
-    Hợp lệ nếu: User là Người tạo CLB OR User nằm trong bảng Club_members.
-    """
-    # 1. Kiểm tra User có phải là Người tạo/Chủ sở hữu của CLB không
-    # (Lưu ý: Thay `created_by` hoặc `owner_id` đúng theo tên trường trong ClubModel của bạn)
-    club = (
+def get_current_user_id(current_user: dict):
+    raw_id = current_user.get("user_id") or current_user.get("sub")
+    return int(raw_id) if raw_id is not None else None
+
+
+def validate_club_member(db: Session, club_id: int, user_id: int):
+    if not user_id:
+        return False
+
+    is_owner = (
         db.query(ClubModel)
-        .filter(
-            ClubModel.club_id == club_id,
-            ClubModel.created_by == user_id,  # Hoặc ClubModel.owner_id == user_id
-        )
+        .filter(ClubModel.club_id == club_id, ClubModel.owner_id == user_id)
         .first()
+        is not None
     )
 
-    if club:
+    if is_owner:
         return True
 
-    # 2. Kiểm tra User có nằm trong bảng thành viên CLB không
     is_member = (
         db.query(Club_membersModel)
         .filter(
@@ -51,11 +50,9 @@ def validate_club_member(db: Session, club_id: int, user_id: int) -> bool:
 def validate_status_transition(
     current_status: ActivityStatus, new_status: ActivityStatus
 ):
-    """Kiểm tra logic luồng chuyển trạng thái (Workflow)."""
     if current_status == new_status:
         return
 
-    # Quy tắc workflow: TODO -> IN_PROGRESS -> DONE (hoặc reset về TODO)
     valid_transitions = {
         ActivityStatus.TODO: [ActivityStatus.IN_PROGRESS, ActivityStatus.DONE],
         ActivityStatus.IN_PROGRESS: [ActivityStatus.DONE, ActivityStatus.TODO],
@@ -64,41 +61,111 @@ def validate_status_transition(
 
     if new_status not in valid_transitions.get(current_status, []):
         raise BadRequestException(
-            f"Không thể chuyển trạng thái từ '{current_status}' sang '{new_status}'",
+            f"Không thể chuyển trạng thái từ '{current_status}' sang '{new_status}'"
         )
+
+
+def get_club_activities(
+    db: Session,
+    club_id: int,
+    current_user: dict,
+    status_filter: ActivityStatus | None = None,
+    priority_filter: ActivityPriority | None = None,
+    assignee_id: int | None = None,
+    search: str | None = None,
+    page: int = 1,
+    limit: int = 10,
+):
+    if not db.query(ClubModel).filter(ClubModel.club_id == club_id).first():
+        raise NotFoundException(f"Không tìm thấy câu lạc bộ ID = {club_id}")
+
+    user_role = current_user.get("role")
+    user_id = get_current_user_id(current_user)
+
+    if user_role != "ADMIN" and not validate_club_member(db, club_id, user_id):
+        raise ForbiddenException(
+            "Bạn không phải thành viên của câu lạc bộ này nên không có quyền xem danh sách hoạt động"
+        )
+
+    query = db.query(Club_activitiesModel).filter(
+        Club_activitiesModel.club_id == club_id
+    )
+
+    if status_filter:
+        query = query.filter(Club_activitiesModel.status == status_filter)
+    if priority_filter:
+        query = query.filter(Club_activitiesModel.priority == priority_filter)
+    if assignee_id:
+        query = query.filter(Club_activitiesModel.assignee_id == int(assignee_id))
+    if search:
+        query = query.filter(Club_activitiesModel.title.ilike(f"%{search.strip()}%"))
+
+    total = query.count()
+    skip = (page - 1) * limit
+    activities = (
+        query.order_by(Club_activitiesModel.created_at.desc())
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
+
+    return {"total": total, "page": page, "limit": limit, "activities": activities}
+
+
+def get_activity_detail(
+    db: Session, club_id: int, activity_id: int, current_user: dict
+):
+    if not db.query(ClubModel).filter(ClubModel.club_id == club_id).first():
+        raise NotFoundException(f"Không tìm thấy câu lạc bộ với ID = {club_id}")
+
+    user_role = current_user.get("role")
+    user_id = get_current_user_id(current_user)
+
+    if user_role != "ADMIN" and not validate_club_member(db, club_id, user_id):
+        raise ForbiddenException(
+            "Bạn không phải thành viên của câu lạc bộ này nên không có quyền xem chi tiết hoạt động"
+        )
+
+    activity = (
+        db.query(Club_activitiesModel)
+        .filter(
+            Club_activitiesModel.activity_id == activity_id,
+            Club_activitiesModel.club_id == club_id,
+        )
+        .first()
+    )
+
+    if not activity:
+        raise NotFoundException(
+            f"Không tìm thấy hoạt động với ID = {activity_id} trong câu lạc bộ này"
+        )
+
+    return activity
 
 
 def create_activity(
     db: Session,
     club_id: int,
     activity_in: ActivityCreate,
-    current_user: dict,  # Nhận current_user dạng dict
+    current_user: dict,
 ):
-    # 1. Kiểm tra CLB tồn tại
     if not db.query(ClubModel).filter(ClubModel.club_id == club_id).first():
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Không tìm thấy câu lạc bộ ID = {club_id}",
-        )
+        raise NotFoundException(f"Không tìm thấy câu lạc bộ ID = {club_id}")
 
-    user_role = current_user.get("role")
-    user_id = current_user.get("user_id")
+    user_id = get_current_user_id(current_user)
 
-    # 2. Kiểm tra quyền tạo: ADMIN hoặc Thành viên trong CLB
-    if user_role != "ADMIN" and not validate_club_member(db, club_id, user_id):
+    if not validate_club_member(db, club_id, user_id):
         raise ForbiddenException(
-            "Bạn không phải thành viên của câu lạc bộ này nên không có quyền tạo hoạt động",
+            "Bạn không phải thành viên của câu lạc bộ này nên không có quyền tạo hoạt động"
         )
 
-    # 3. Validate assignee_id (nếu gán task): Phải là thành viên trong CLB
     if activity_in.assignee_id and not validate_club_member(
-        db, club_id, activity_in.assignee_id
+        db, club_id, int(activity_in.assignee_id)
     ):
         raise BadRequestException(
-            "Người được giao nhiệm vụ không phải là thành viên trong câu lạc bộ",
+            "Người được giao nhiệm vụ không phải là thành viên trong câu lạc bộ"
         )
 
-    # 4. Lưu vào DB
     new_activity = Club_activitiesModel(
         club_id=club_id,
         title=activity_in.title,
@@ -116,110 +183,12 @@ def create_activity(
     return new_activity
 
 
-def get_club_activities(
-    db: Session,
-    club_id: int,
-    current_user: dict,  # Nhận current_user dạng dict
-    status_filter: ActivityStatus | None = None,
-    priority_filter: ActivityPriority | None = None,
-    assignee_id: int | None = None,
-    search: str | None = None,
-    page: int = 1,
-    limit: int = 10,
-):
-    # 1. Kiểm tra CLB tồn tại
-    if not db.query(ClubModel).filter(ClubModel.club_id == club_id).first():
-        raise NotFoundException(
-            f"Không tìm thấy câu lạc bộ ID = {club_id}",
-        )
-
-    user_role = current_user.get("role")
-    user_id = current_user.get("user_id")
-
-    # 2. Kiểm tra quyền: Phải là ADMIN hoặc là Thành viên trong CLB
-    if user_role != "ADMIN" and not validate_club_member(db, club_id, user_id):
-        raise ForbiddenException(
-            "Bạn không phải thành viên của câu lạc bộ này nên không có quyền xem danh sách hoạt động",
-        )
-
-    # 3. Query & Bộ lọc
-    query = db.query(Club_activitiesModel).filter(
-        Club_activitiesModel.club_id == club_id
-    )
-
-    if status_filter:
-        query = query.filter(Club_activitiesModel.status == status_filter)
-    if priority_filter:
-        query = query.filter(Club_activitiesModel.priority == priority_filter)
-    if assignee_id:
-        query = query.filter(Club_activitiesModel.assignee_id == assignee_id)
-    if search:
-        query = query.filter(Club_activitiesModel.title.ilike(f"%{search.strip()}%"))
-
-    total = query.count()
-    skip = (page - 1) * limit
-    activities = (
-        query.order_by(Club_activitiesModel.created_at.desc())
-        .offset(skip)
-        .limit(limit)
-        .all()
-    )
-
-    return {"total": total, "page": page, "limit": limit, "activities": activities}
-
-
-def get_activity_detail(
-    db: Session, club_id: int, activity_id: int, current_user: UserModel
-):
-    # 1. Kiểm tra Câu lạc bộ có tồn tại không
-    club = db.query(ClubModel).filter(ClubModel.club_id == club_id).first()
-    if not club:
-        raise NotFoundException(
-            f"Không tìm thấy câu lạc bộ với ID = {club_id}",
-        )
-
-    # 2. Kiểm tra phân quyền: User phải là thành viên CLB (MEMBER/OWNER) hoặc ADMIN
-    if current_user.get("role") != "ADMIN":
-        member_record = (
-            db.query(Club_membersModel)
-            .filter(
-                Club_membersModel.club_id == club_id,
-                Club_membersModel.user_id == current_user.get("user_id"),
-            )
-            .first()
-        )
-
-        if not member_record:
-            raise ForbiddenException(
-                "Bạn không phải thành viên của câu lạc bộ này nên không có quyền xem chi tiết hoạt động",
-            )
-
-    # 3. Lấy thông tin Activity và đảm bảo nó thuộc về CLB được chỉ định
-    # Tính năng Lazy Loading / Joined Loading của SQLAlchemy sẽ tự động query các Relationship
-    # ("creator" và "assignee") vì chúng ta đã khai báo trong Model và map bằng Pydantic.
-    activity = (
-        db.query(Club_activitiesModel)
-        .filter(
-            Club_activitiesModel.activity_id == activity_id,
-            Club_activitiesModel.club_id == club_id,
-        )
-        .first()
-    )
-
-    if not activity:
-        raise NotFoundException(
-            f"Không tìm thấy hoạt động với ID = {activity_id} trong câu lạc bộ này",
-        )
-
-    return activity
-
-
 def update_activity(
     db: Session,
     club_id: int,
     activity_id: int,
     activity_in: ActivityUpdate,
-    current_user: UserModel,
+    current_user: dict,
 ):
     activity = (
         db.query(Club_activitiesModel)
@@ -230,48 +199,23 @@ def update_activity(
         .first()
     )
     if not activity:
-        raise NotFoundException("Không tìm thấy hoạt động")
+        raise NotFoundException("Không tìm thấy hoạt động trong câu lạc bộ này")
 
-    member_record = (
-        db.query(Club_membersModel)
-        .filter(
-            Club_membersModel.club_id == club_id,
-            Club_membersModel.user_id == current_user.get("user_id"),
-        )
-        .first()
-    )
+    user_id = get_current_user_id(current_user)
 
-    is_system_admin = current_user.get("role") == "ADMIN"
-    is_club_manager = member_record and member_record.role in [
-        "OWNER",
-        "LEADER",
-        "ADMIN",
-    ]
-    is_creator = activity.created_by == current_user.user_id
-    is_assignee = activity.assignee_id == current_user.user_id
-
-    if not (is_system_admin or is_club_manager or is_creator or is_assignee):
+    if not validate_club_member(db, club_id, user_id):
         raise ForbiddenException(
-            "Bạn không có quyền chỉnh sửa hoạt động này",
+            "Bạn không phải thành viên của câu lạc bộ này nên không có quyền chỉnh sửa hoạt động"
         )
 
     update_data = activity_in.model_dump(exclude_unset=True)
 
-    # Assignee chỉ được cập nhật status
-    if is_assignee and not (is_system_admin or is_club_manager or is_creator):
-        if set(update_data.keys()) - {"status"}:
-            raise ForbiddenException(
-                "Người thực hiện chỉ có quyền cập nhật trạng thái (status)",
-            )
-
-    # Phân việc: Validate assignee mới thuộc CLB
     if "assignee_id" in update_data and update_data["assignee_id"] is not None:
-        if not validate_club_member(db, club_id, update_data["assignee_id"]):
+        if not validate_club_member(db, club_id, int(update_data["assignee_id"])):
             raise BadRequestException(
-                "Người được phân công mới không phải là thành viên trong câu lạc bộ",
+                "Người được phân công mới không phải là thành viên trong câu lạc bộ"
             )
 
-    # Workflow Validation cho Status
     if "status" in update_data:
         validate_status_transition(activity.status, update_data["status"])
 
@@ -283,17 +227,7 @@ def update_activity(
     return activity
 
 
-def delete_activity(
-    db: Session, club_id: int, activity_id: int, current_user: UserModel
-) -> dict:
-    # 1. Kiểm tra Câu lạc bộ có tồn tại không
-    club = db.query(ClubModel).filter(ClubModel.club_id == club_id).first()
-    if not club:
-        raise NotFoundException(
-            f"Không tìm thấy câu lạc bộ với ID = {club_id}",
-        )
-
-    # 2. Kiểm tra Hoạt động có tồn tại trong CLB không
+def delete_activity(db: Session, club_id: int, activity_id: int, current_user: dict):
     activity = (
         db.query(Club_activitiesModel)
         .filter(
@@ -305,40 +239,23 @@ def delete_activity(
 
     if not activity:
         raise NotFoundException(
-            f"Không tìm thấy hoạt động với ID = {activity_id} trong câu lạc bộ này",
+            f"Không tìm thấy hoạt động với ID = {activity_id} trong câu lạc bộ này"
         )
 
-    # 3. Kiểm tra tư cách thành viên trong CLB
-    member_record = (
-        db.query(Club_membersModel)
-        .filter(
-            Club_membersModel.club_id == club_id,
-            Club_membersModel.user_id == current_user.get("user_id"),
-        )
+    user_id = get_current_user_id(current_user)
+
+    is_owner = (
+        db.query(ClubModel)
+        .filter(ClubModel.club_id == club_id, ClubModel.owner_id == user_id)
         .first()
+        is not None
     )
 
-    if current_user.get("role") != "ADMIN" and not member_record:
+    if not is_owner:
         raise ForbiddenException(
-            "Bạn không phải thành viên của câu lạc bộ này",
+            "Chỉ chủ sở hữu (Owner) của câu lạc bộ mới có quyền xóa hoạt động"
         )
 
-    # 4. Kiểm tra phân quyền xóa (Permission Logic)
-    # Chỉ cho phép: System ADMIN, Ban quản lý CLB (OWNER/LEADER/ADMIN), hoặc Người tạo task
-    is_system_admin = current_user.role == "ADMIN"
-    is_club_manager = member_record and member_record.role in [
-        "OWNER",
-        "LEADER",
-        "ADMIN",
-    ]
-    is_creator = activity.created_by == current_user.user_id
-
-    if not (is_system_admin or is_club_manager or is_creator):
-        raise ForbiddenException(
-            "Bạn không có quyền xóa hoạt động này. Chỉ người tạo hoặc Ban quản trị mới có quyền xóa.",
-        )
-
-    # 5. Xóa khỏi Database
     db.delete(activity)
     db.commit()
 
