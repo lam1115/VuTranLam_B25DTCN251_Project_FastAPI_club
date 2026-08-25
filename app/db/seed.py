@@ -21,7 +21,7 @@ def seed_data():
         print("--- Khởi tạo dữ liệu mẫu theo yêu cầu mới ---")
 
         # -------------------------------------------------------------
-        # 1. BẢNG USERS: 1 Admin + 10 Users thường
+        # 1. BẢNG USERS: 1 Admin + 9 Users thường (Tổng 10 Users)
         # -------------------------------------------------------------
         admin_user = UserModel(
             email="vutranlam1115@gmail.com",
@@ -193,7 +193,7 @@ def seed_data():
         db.commit()
 
         # -------------------------------------------------------------
-        # 4. BẢNG CLUB_ACTIVITIES: 9 hoạt động (Chia đều 3 cho mỗi CLB)
+        # 4. BẢNG CLUB_ACTIVITIES: 9 hoạt động (Bổ sung created_by)
         # -------------------------------------------------------------
         activities_data = [
             # --- CLB IT (3 hoạt động) ---
@@ -202,6 +202,9 @@ def seed_data():
                 title="Workshop FastAPI & Database Seed",
                 description="Hướng dẫn khởi tạo sơ đồ cơ sở dữ liệu và seed dữ liệu mẫu.",
                 assignee_id=admin_user.user_id,
+                created_by=normal_users[
+                    0
+                ].user_id,  # Nguyễn Văn A (Owner) tạo và giao cho Admin
                 status="IN_PROGRESS",
                 priority="HIGH",
                 due_date=datetime.now(timezone.utc) + timedelta(days=5),
@@ -211,6 +214,9 @@ def seed_data():
                 title="Seminar Clean Architecture",
                 description="Chia sẻ kiến thức về cấu trúc thư mục chuẩn trong dự án Python.",
                 assignee_id=normal_users[0].user_id,
+                created_by=normal_users[
+                    0
+                ].user_id,  # Nguyễn Văn A (Owner) tự giao công việc
                 status="TODO",
                 priority="MEDIUM",
                 due_date=datetime.now(timezone.utc) + timedelta(days=12),
@@ -220,6 +226,9 @@ def seed_data():
                 title="Hackathon Sinh Viên IT 2026",
                 description="Thi lập trình ứng dụng quản lý câu lạc bộ sinh viên.",
                 assignee_id=normal_users[3].user_id,
+                created_by=normal_users[
+                    3
+                ].user_id,  # Phạm Thị D (Member) tự khởi tạo ý tưởng
                 status="DONE",
                 priority="HIGH",
                 due_date=datetime.now(timezone.utc) - timedelta(days=2),
@@ -230,6 +239,7 @@ def seed_data():
                 title="Tuyển thành viên Ban nhạc khoá mới",
                 description="Tổ chức phỏng vấn và thử giọng các bạn tân sinh viên.",
                 assignee_id=normal_users[1].user_id,
+                created_by=normal_users[1].user_id,  # Trần Thị B (Owner) tạo
                 status="DONE",
                 priority="HIGH",
                 due_date=datetime.now(timezone.utc) - timedelta(days=5),
@@ -239,6 +249,9 @@ def seed_data():
                 title="Tập luyện đêm nhạc Mùa Thu",
                 description="Tổng duyệt danh sách bài hát và sắp xếp lịch tập acoustic.",
                 assignee_id=normal_users[5].user_id,
+                created_by=normal_users[
+                    1
+                ].user_id,  # Trần Thị B (Owner) giao cho Võ Thị F
                 status="IN_PROGRESS",
                 priority="MEDIUM",
                 due_date=datetime.now(timezone.utc) + timedelta(days=7),
@@ -248,6 +261,9 @@ def seed_data():
                 title="Giao lưu Âm nhạc ngoài trời",
                 description="Biểu diễn giao lưu tại khuôn viên trường.",
                 assignee_id=normal_users[6].user_id,
+                created_by=normal_users[
+                    6
+                ].user_id,  # Đặng Văn G (Member) đề xuất và tự nhận
                 status="TODO",
                 priority="LOW",
                 due_date=datetime.now(timezone.utc) + timedelta(days=20),
@@ -258,6 +274,7 @@ def seed_data():
                 title="Giải Bóng đá Sinh viên Thường niên",
                 description="Mở đăng ký các đội bóng và bốc thăm chia bảng đấu.",
                 assignee_id=normal_users[2].user_id,
+                created_by=normal_users[2].user_id,  # Lê Văn C (Owner) tạo
                 status="IN_PROGRESS",
                 priority="HIGH",
                 due_date=datetime.now(timezone.utc) + timedelta(days=4),
@@ -267,6 +284,9 @@ def seed_data():
                 title="Đặt sân tập Cầu lông hàng tuần",
                 description="Liên hệ quản lý nhà thể thao để đăng ký khung giờ tập.",
                 assignee_id=normal_users[7].user_id,
+                created_by=normal_users[
+                    2
+                ].user_id,  # Lê Văn C (Owner) phân công cho Bùi Thị H
                 status="TODO",
                 priority="LOW",
                 due_date=datetime.now(timezone.utc) + timedelta(days=2),
@@ -276,6 +296,9 @@ def seed_data():
                 title="Tổng kết giải Chạy Việt dã",
                 description="Trao huy chương và bằng khen cho các vận động viên đạt giải.",
                 assignee_id=normal_users[8].user_id,
+                created_by=normal_users[
+                    8
+                ].user_id,  # Đỗ Văn I (Member) phụ trách tạo task tổng kết
                 status="DONE",
                 priority="MEDIUM",
                 due_date=datetime.now(timezone.utc) - timedelta(days=1),
@@ -285,7 +308,7 @@ def seed_data():
         db.add_all(activities_data)
         db.commit()
 
-        print("=== Seed thành công 100% theo đúng cấu trúc yêu cầu! ===")
+        print("=== Seed thành công 100% bao gồm cả trường created_by! ===")
 
     except Exception as e:
         print(f"Lỗi khi seed dữ liệu: {e}")

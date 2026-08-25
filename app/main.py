@@ -7,6 +7,7 @@ from app.routers.authentication_router import router as authentication
 from app.routers.user_router import router as user
 from app.routers.club_router import router as club
 from app.routers.ClubMember_router import router as member
+from app.routers.activity_club_router import router as activity_club
 from app.core.limiter import limit
 
 
@@ -26,6 +27,7 @@ app.include_router(authentication)
 app.include_router(user)
 app.include_router(club)
 app.include_router(member)
+app.include_router(activity_club)
 
 
 # Health check endpoint

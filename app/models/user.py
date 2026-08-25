@@ -22,8 +22,16 @@ class UserModel(Base):
     owned_clubs = relationship("ClubModel", back_populates="owner")
     club_memberships = relationship("Club_membersModel", back_populates="user")
     assigned_activities = relationship(
-        "Club_activitiesModel", back_populates="assignee"
+        "Club_activitiesModel",
+        foreign_keys="Club_activitiesModel.assignee_id",
+        back_populates="assignee",
     )
+    created_activities = relationship(
+        "Club_activitiesModel",
+        foreign_keys="Club_activitiesModel.created_by",
+        back_populates="creator",
+    )
+
     comments = relationship("CommentsModel", back_populates="user")
     attachments = relationship("AttachmentsModel", back_populates="user")
     activity_logs = relationship("Activity_logsModel", back_populates="user")
