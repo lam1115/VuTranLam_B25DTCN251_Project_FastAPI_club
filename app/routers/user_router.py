@@ -1,7 +1,5 @@
-from fastapi import APIRouter, Depends
-from sqlalchemy import or_
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
-from typing import Optional
 from app.dependencies import get_current_user, role_guard
 from app.schemas.user import UserResponse
 from app.models.user import UserModel
@@ -17,10 +15,11 @@ def get_me(current_user: dict = Depends(get_current_user)):
 
 
 # Lây thông tin tất cả User, có thêm chức năng search (chỉ hữu hiệu với ADMIN)
-@router.get("", response_model=list[UserResponse])
+@router.get("", response_model=list[UserResponse], status_code=status.HTTP_200_OK)
 def get_all_users(
-    search: Optional[str] = None,
-    is_active: Optional[bool] = None,
+    full_name: str | None = None,
+    email: str | None = None,
+    is_active: bool | None = None,
     db: Session = Depends(get_db),
     admin: UserModel = Depends(role_guard),
 ):
@@ -28,9 +27,11 @@ def get_all_users(
 
     if is_active is not None:
         query = query.filter(UserModel.is_active == is_active)
-    if search:
-        query = query.filter(
-            or_(UserModel.full_name.contains(search), UserModel.email.contains(search))
-        )
+
+    if full_name and full_name.strip():
+        query = query.filter(UserModel.full_name.ilike(f"%{full_name.strip()}%"))
+
+    if email and email.strip():
+        query = query.filter(UserModel.email.ilike(f"%{email.strip()}%"))
 
     return query.all()

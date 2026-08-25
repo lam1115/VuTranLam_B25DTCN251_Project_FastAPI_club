@@ -10,7 +10,7 @@ from app.routers.ClubMember_router import router as member
 from app.core.limiter import limit
 
 
-from app.core import AppException, app_exception_handler
+from app.core.exception_handlers import AppException, app_exception_handler
 
 Base.metadata.create_all(bind=engine)
 
