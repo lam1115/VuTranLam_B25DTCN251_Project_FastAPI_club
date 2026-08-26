@@ -42,7 +42,7 @@ def create_access_token(user_id: str, full_name: str, email: str, role: str) -> 
 
 
 # Tạo refesh token
-def create_refresh_token(user_id: int):
+def create_refresh_token(user_id: int) -> tuple[str, datetime]:
     expire_time = datetime.now(timezone.utc) + timedelta(days=7)
     payload = {"sub": str(user_id), "type": "refresh", "exp": expire_time}
     token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)

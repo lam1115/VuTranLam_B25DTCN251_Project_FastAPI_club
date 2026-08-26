@@ -17,14 +17,19 @@ class ActivityPriority(str, Enum):
 
 
 class ActivityBase(BaseModel):
-    title: str
+    title: str = Field(..., min_length=1, max_length=255)
     description: Optional[str] = None
     priority: ActivityPriority = ActivityPriority.MEDIUM
+    status: ActivityStatus = (
+        ActivityStatus.TODO
+    )  # Bổ sung trường status với giá trị mặc định TODO
     due_date: Optional[datetime] = None
 
 
 class ActivityCreate(ActivityBase):
-    assignee_id: int
+    assignee_id: Optional[int] = (
+        None  # Đổi sang Optional để linh hoạt nếu tạo bài không gán ai
+    )
 
 
 class ActivityUpdate(BaseModel):
@@ -64,11 +69,10 @@ class UserBasicInfo(BaseModel):
     full_name: str
     email: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
-# Schema Response chi tiết Activity (kế thừa từ ActivityResponse cơ bản)
+# Schema Response chi tiết Activity
 class ActivityDetailResponse(BaseModel):
     activity_id: int
     club_id: int
@@ -83,9 +87,8 @@ class ActivityDetailResponse(BaseModel):
     assignee_id: Optional[int]
     created_by: int
 
-    # Thông tin User chi tiết được lồng vào (nested) qua Relationship của SQLAlchemy
+    # Thông tin User chi tiết được lồng vào qua Relationship
     assignee: Optional[UserBasicInfo] = None
     creator: UserBasicInfo
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

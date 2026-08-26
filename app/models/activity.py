@@ -21,7 +21,7 @@ class Club_activitiesModel(Base):
     status = Column(Enum("TODO", "IN_PROGRESS", "DONE"), default="TODO", nullable=False)
     priority = Column(Enum("LOW", "MEDIUM", "HIGH"), default="MEDIUM", nullable=False)
     due_date = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=datetime.now, nullable=False)  # Đã bỏ dấu
+    created_at = Column(DateTime, default=datetime.now, nullable=False)
 
     # Relationship
     club = relationship("ClubModel", back_populates="activities")
