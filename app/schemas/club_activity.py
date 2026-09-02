@@ -20,16 +20,12 @@ class ActivityBase(BaseModel):
     title: str = Field(..., min_length=1, max_length=255)
     description: Optional[str] = None
     priority: ActivityPriority = ActivityPriority.MEDIUM
-    status: ActivityStatus = (
-        ActivityStatus.TODO
-    )  # Bổ sung trường status với giá trị mặc định TODO
+    status: ActivityStatus = ActivityStatus.TODO
     due_date: Optional[datetime] = None
 
 
 class ActivityCreate(ActivityBase):
-    assignee_id: Optional[int] = (
-        None  # Đổi sang Optional để linh hoạt nếu tạo bài không gán ai
-    )
+    assignee_id: int | None = None
 
 
 class ActivityUpdate(BaseModel):
