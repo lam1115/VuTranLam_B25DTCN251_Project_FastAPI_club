@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String, Enum
-from sqlalchemy import ForeignKey, DateTime, Text
+from sqlalchemy import ForeignKey, Date, Text
 from sqlalchemy.orm import relationship
 from datetime import datetime
 
@@ -20,8 +20,8 @@ class Club_activitiesModel(Base):
 
     status = Column(Enum("TODO", "IN_PROGRESS", "DONE"), default="TODO", nullable=False)
     priority = Column(Enum("LOW", "MEDIUM", "HIGH"), default="MEDIUM", nullable=False)
-    due_date = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=datetime.now, nullable=False)
+    due_date = Column(Date, nullable=True)
+    created_at = Column(Date, default=datetime.now, nullable=False)
 
     # Relationship
     club = relationship("ClubModel", back_populates="activities")

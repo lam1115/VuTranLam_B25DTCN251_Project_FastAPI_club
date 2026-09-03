@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String, Enum, Boolean
-from sqlalchemy import ForeignKey, DateTime, Text
+from sqlalchemy import ForeignKey, Date, Text
 from sqlalchemy.orm import relationship
 from datetime import datetime
 
@@ -14,9 +14,9 @@ class ClubModel(Base):
     club_name = Column(String(100), nullable=False)
     description = Column(Text)
     owner_id = Column(Integer, ForeignKey("Users.user_id"), nullable=False)
-    created_at = Column(DateTime, default=datetime.now(), nullable=False)
+    created_at = Column(Date, default=datetime.now(), nullable=False)
     is_deleted = Column(Boolean, default=False, nullable=False)
-    deleted_at = Column(DateTime, nullable=True)
+    deleted_at = Column(Date, nullable=True)
 
     owner = relationship("UserModel", back_populates="owned_clubs")
     members = relationship("Club_membersModel", back_populates="club")
@@ -30,7 +30,7 @@ class Club_membersModel(Base):
     club_id = Column(Integer, ForeignKey("Clubs.club_id"), primary_key=True)
     user_id = Column(Integer, ForeignKey("Users.user_id"), primary_key=True)
     role = Column(Enum("OWNER", "MEMBER"), nullable=False)
-    joined_at = Column(DateTime, default=datetime.now(), nullable=False)
+    joined_at = Column(Date, default=datetime.now(), nullable=False)
 
     # Relationship
     club = relationship("ClubModel", back_populates="members")

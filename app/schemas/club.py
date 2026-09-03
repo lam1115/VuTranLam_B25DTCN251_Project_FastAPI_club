@@ -1,5 +1,5 @@
 from pydantic import BaseModel, ConfigDict
-from datetime import datetime
+from datetime import date
 from typing import List, Optional
 
 from app.schemas.member import ClubMemberResponse
@@ -29,7 +29,7 @@ class ClubUpdate(BaseModel):
 class ClubResponse(ClubBase):
     club_id: int
     owner: OwnerInfo
-    created_at: datetime
+    created_at: date
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -37,7 +37,7 @@ class ClubResponse(ClubBase):
 class ClubDetailResponse(ClubBase):
     club_id: int
     owner: OwnerInfo
-    created_at: datetime
+    created_at: date
     members: List[ClubMemberResponse] | None = None
 
     model_config = ConfigDict(from_attributes=True)

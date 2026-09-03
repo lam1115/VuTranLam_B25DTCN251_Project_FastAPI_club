@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String, Enum
-from sqlalchemy import Boolean, ForeignKey, DateTime, Text
+from sqlalchemy import Boolean, ForeignKey, Date, Text
 from sqlalchemy.orm import relationship
 from datetime import datetime
 
@@ -16,7 +16,7 @@ class CommentsModel(Base):
     )
     user_id = Column(Integer, ForeignKey("Users.user_id"), nullable=True)
     content = Column(Text, nullable=False)
-    created_at = Column(DateTime, default=datetime.now(), nullable=False)
+    created_at = Column(Date, default=datetime.now(), nullable=False)
 
     # Relationship
     activity = relationship("Club_activitiesModel", back_populates="comments")
@@ -36,7 +36,7 @@ class AttachmentsModel(Base):
     file_name = Column(String(255), nullable=False)
     file_size = Column(Integer, nullable=False)
     mime_type = Column(String(100), nullable=False)
-    created_at = Column(DateTime, default=datetime.now(), nullable=False)
+    created_at = Column(Date, default=datetime.now(), nullable=False)
 
     # Relationship
     activity = relationship("Club_activitiesModel", back_populates="attachments")
@@ -53,7 +53,7 @@ class Activity_logsModel(Base):
     entity_type = Column(Enum("CLUB", "MEMBER", "ACTIVITY"), nullable=False)
     entity_id = Column(Integer, nullable=False)
     details = Column(Text, nullable=False)
-    created_at = Column(DateTime, default=datetime.now(), nullable=False)
+    created_at = Column(Date, default=datetime.now(), nullable=False)
 
     # Relationship
     user = relationship("UserModel", back_populates="activity_logs")
@@ -67,8 +67,8 @@ class Refresh_tokensModel(Base):
     token = Column(String(512), unique=True, nullable=False, index=True)
     user_id = Column(Integer, ForeignKey("Users.user_id"), nullable=False)
     is_revoked = Column(Boolean, default=False, nullable=False)
-    expires_at = Column(DateTime, nullable=False)
-    created_at = Column(DateTime, default=datetime.now())
+    expires_at = Column(Date, nullable=False)
+    created_at = Column(Date, default=datetime.now())
     user_agent = Column(String(255), nullable=True)
 
     # Relationship

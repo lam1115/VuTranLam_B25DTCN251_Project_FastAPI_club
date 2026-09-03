@@ -1,7 +1,7 @@
 from pydantic import BaseModel, EmailStr, ConfigDict
 from typing import Optional
 from enum import Enum
-from datetime import datetime
+from datetime import date
 
 
 class UserRole(str, Enum):
@@ -32,7 +32,7 @@ class UserResponse(UserBase):
     user_id: int
     role: UserRole
     is_active: bool
-    created_at: datetime
+    created_at: date
 
     model_config = ConfigDict(from_attributes=True)
 

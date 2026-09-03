@@ -1,6 +1,6 @@
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 from typing import Optional
-from datetime import datetime
+from datetime import date
 from enum import Enum
 
 
@@ -28,6 +28,6 @@ class ClubMemberRemoveRequest(BaseModel):
 class ClubMemberResponse(BaseModel):
     user: MemberInfo
     role: MemberRole
-    joined_at: datetime
+    joined_at: date
 
     model_config = ConfigDict(from_attributes=True)
